@@ -5,10 +5,10 @@ import "time"
 type RequestContextKey string
 
 type RequestBody struct {
-	Id     string `json:"id"`
-	Ip     string `json:"ip"`
-	Method string `json:"method"`
-	Path   string `json:"path"`
+	Id     string `json:"request_id,omitempty"`
+	Ip     string `json:"ip_address,omitempty"`
+	Method string `json:"method,omitempty"`
+	Path   string `json:"path,omitempty"`
 }
 
 const RequestKey RequestContextKey = "REQUEST_KEY"

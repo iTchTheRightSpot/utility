@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 )
@@ -26,7 +27,7 @@ func (m *mockLogger) Timezone() *time.Location {
 func (m *mockLogger) Date() time.Time {
 	dt, err := time.Parse(timeFormat, time.Now().In(m.location).Format(timeFormat))
 	if err != nil {
-		log.Print(err.Error())
+		fmt.Print(err.Error())
 	}
 	return dt
 }
@@ -34,19 +35,19 @@ func (m *mockLogger) Date() time.Time {
 func (m *mockLogger) Error(ctx context.Context, variables ...interface{}) {
 	_, str, err := logformat(ctx, iError, m.Date(), variables)
 	if err != nil {
-		log.Print(err.Error())
+		fmt.Print(err.Error())
 		return
 	}
-	log.Print(str)
+	fmt.Print(str)
 }
 
 func (m *mockLogger) Log(ctx context.Context, variables ...interface{}) {
 	_, str, err := logformat(ctx, iLog, m.Date(), variables)
 	if err != nil {
-		log.Print(err.Error())
+		fmt.Print(err.Error())
 		return
 	}
-	log.Print(str)
+	fmt.Print(str)
 }
 
 func (m *mockLogger) Fatal(variables ...interface{}) {
@@ -60,8 +61,8 @@ func (m *mockLogger) Fatal(variables ...interface{}) {
 func (m *mockLogger) Critical(ctx context.Context, variables ...interface{}) {
 	_, str, err := logformat(ctx, iCritical, m.Date(), variables)
 	if err != nil {
-		log.Print(err.Error())
+		fmt.Print(err.Error())
 		return
 	}
-	log.Print(str)
+	fmt.Print(str)
 }

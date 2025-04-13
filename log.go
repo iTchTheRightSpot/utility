@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"strings"
@@ -33,10 +33,13 @@ const (
 )
 
 type discord struct {
-	RB     *RequestBody `json:"rb"`
-	Status logType      `json:"status"`
-	Time   time.Time    `json:"time"`
-	Info   string       `json:"info"`
+	Id     string  `json:"request_id,omitempty"`
+	Ip     string  `json:"ip_address,omitempty"`
+	Method string  `json:"method,omitempty"`
+	Path   string  `json:"path,omitempty"`
+	Status logType `json:"status"`
+	Time   string  `json:"time"`
+	Info   string  `json:"info"`
 }
 
 type Logger struct {
@@ -45,17 +48,17 @@ type Logger struct {
 	Webhook string
 }
 
-func ProdLogger(timezone, webhook string) (ILogger, error) {
+func ProdLogger(timezone, webhook string) ILogger {
 	tz, err := Timezone(timezone)
 	if err != nil {
 		log.Fatal(err.Error())
-		return nil, err
+		return nil
 	}
 	return &Logger{
 		TZ:      tz,
 		Client:  http.Client{Timeout: 2 * time.Second},
 		Webhook: webhook,
-	}, nil
+	}
 }
 
 func (l *Logger) Timezone() *time.Location {
@@ -65,13 +68,13 @@ func (l *Logger) Timezone() *time.Location {
 func (l *Logger) Date() time.Time {
 	dt, err := time.Parse(timeFormat, time.Now().In(l.TZ).Format(timeFormat))
 	if err != nil {
-		log.Printf(err.Error())
+		fmt.Printf(err.Error())
 		return time.Time{}
 	}
 	return dt
 }
 
-func (l *Logger) post(d *discord) {
+func (l *Logger) Post(d *discord) {
 	var title strings.Builder
 	title.WriteString("📄 New Log Entry")
 	if d.Status == iCritical || d.Status == iError {
@@ -82,14 +85,14 @@ func (l *Logger) post(d *discord) {
 		"embeds": []map[string]interface{}{
 			{
 				"title":       title.String(),
-				"description": fmt.Sprintf("Status %s", d.Status),
+				"description": fmt.Sprintf("Status: %s", d.Status),
 				"color":       5814783, // color
 				"fields": []map[string]string{
-					{"name": "Request Id", "value": d.RB.Id, "inline": "true"},
-					{"name": "IP", "value": d.RB.Ip, "inline": "true"},
-					{"name": "Method", "value": d.RB.Method, "inline": "true"},
-					{"name": "Path", "value": d.RB.Path, "inline": "false"},
-					{"name": "Time", "value": d.Time.Format(time.RFC822), "inline": "false"},
+					{"name": "Request ID", "value": d.Id, "inline": "false"},
+					{"name": "IP Address", "value": d.Ip, "inline": "false"},
+					{"name": "Method", "value": d.Method, "inline": "false"},
+					{"name": "Path", "value": d.Path, "inline": "false"},
+					{"name": "Time", "value": d.Time, "inline": "false"},
 					{"name": "Info", "value": d.Info, "inline": "false"},
 				},
 			},
@@ -98,43 +101,43 @@ func (l *Logger) post(d *discord) {
 
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(payload); err != nil {
-		log.Printf("%s %s", iCritical, err.Error())
+		fmt.Printf("%s %s", iCritical, err.Error())
 		return
 	}
 
 	if _, err := http.Post(l.Webhook, "application/json", buf); err != nil {
-		log.Printf("%s %s", iCritical, err.Error())
+		fmt.Printf("%s %s", iCritical, err.Error())
 	}
 }
 
 func (l *Logger) Error(ctx context.Context, variables ...interface{}) {
 	d, str, err := logformat(ctx, iError, l.Date(), variables)
 	if err != nil {
-		log.Print(err.Error())
+		fmt.Print(err.Error())
 		return
 	}
-	log.Print(str)
-	l.post(d)
+	fmt.Print(str)
+	l.Post(d)
 }
 
 func (l *Logger) Critical(ctx context.Context, variables ...interface{}) {
 	d, str, err := logformat(ctx, iCritical, l.Date(), variables)
 	if err != nil {
-		log.Print(err.Error())
+		fmt.Print(err.Error())
 		return
 	}
-	log.Print(str)
-	l.post(d)
+	fmt.Print(str)
+	l.Post(d)
 }
 
 func (l *Logger) Log(ctx context.Context, variables ...interface{}) {
 	d, str, err := logformat(ctx, iLog, l.Date(), variables)
 	if err != nil {
-		log.Print(err.Error())
+		fmt.Print(err.Error())
 		return
 	}
-	log.Print(str)
-	l.post(d)
+	fmt.Print(str)
+	l.Post(d)
 }
 
 func (l *Logger) Fatal(variables ...interface{}) {
@@ -146,21 +149,25 @@ func (l *Logger) Fatal(variables ...interface{}) {
 }
 
 func logformat(ctx context.Context, status logType, d time.Time, variables ...interface{}) (*discord, string, error) {
-	obj, ok := ctx.Value(RequestKey).(*RequestBody)
-	if !ok || obj == nil {
-		return nil, "", errors.New(string(RequestKey) + "not found")
-	}
-
 	var sb strings.Builder
 	for _, v := range variables {
 		sb.WriteString(fmt.Sprintf("%v", v))
 	}
 
 	o := discord{
-		RB:     obj,
 		Status: status,
-		Time:   d,
+		Time:   d.Format(time.RFC822),
 		Info:   sb.String(),
+	}
+
+	obj, ok := ctx.Value(RequestKey).(*RequestBody)
+	if !ok || obj == nil {
+		o.Id = uuid.NewString()
+	} else {
+		o.Id = obj.Id
+		o.Ip = obj.Ip
+		o.Method = obj.Method
+		o.Path = obj.Path
 	}
 
 	js, err := json.MarshalIndent(o, "", "  ")
@@ -168,5 +175,5 @@ func logformat(ctx context.Context, status logType, d time.Time, variables ...in
 		return nil, "", err
 	}
 
-	return &o, string(js), nil
+	return &o, string(js) + "\n", nil
 }

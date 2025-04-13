@@ -30,7 +30,6 @@ func (dep *Middleware) Initialize(router *http.ServeMux) http.Handler {
 func (dep *Middleware) clientIP(r *http.Request) string {
 	ip := r.Header.Get("X-Forwarded-For")
 	if ip != "" {
-		// the header can contain multiple IPs, so take the first one
 		return strings.Split(ip, ",")[0]
 	}
 	return r.RemoteAddr
@@ -38,16 +37,17 @@ func (dep *Middleware) clientIP(r *http.Request) string {
 
 func (dep *Middleware) Log(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := dep.Logger.Date()
 		b := &RequestBody{
 			Id:     uuid.NewString(),
 			Ip:     dep.clientIP(r),
 			Method: r.Method,
-			Path:   r.Method,
+			Path:   r.URL.Path,
 		}
 		r = r.WithContext(context.WithValue(r.Context(), RequestKey, b))
-		dep.Logger.Log(r.Context(), "Request")
 		obj := &wrappedWriter{ResponseWriter: w, statusCode: http.StatusOK}
 		next.ServeHTTP(obj, r)
-		dep.Logger.Log(r.Context(), fmt.Sprintf("Response Status: %d", obj.statusCode))
+		str := fmt.Sprintf("Response Status: %d | Duration: %v second(s)", obj.statusCode, dep.Logger.Date().Sub(start).Seconds())
+		dep.Logger.Log(r.Context(), str)
 	})
 }

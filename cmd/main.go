@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
+	"github.com/iTchTheRightSpot/log"
 	"net/http"
 )
 
 func main() {
-	lg := DevLogger("America/Toronto")
-	m := Middleware{Logger: lg}
+	lg := log.DevLogger("America/Toronto")
+	m := log.Middleware{Logger: lg}
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

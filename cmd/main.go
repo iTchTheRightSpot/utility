@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/iTchTheRightSpot/log"
+	"github.com/iTchTheRightSpot/utility/log"
 	"net/http"
 )
 

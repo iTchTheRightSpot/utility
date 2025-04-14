@@ -1,2 +1,4 @@
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/iTchTheRightSpot/log v0.0.0-20250414205921-29d388f65e0e h1:cPKdIOuuanXjl0b/LWS+KB8UtUo/jSHaTHPgTKlROWc=
+github.com/iTchTheRightSpot/log v0.0.0-20250414205921-29d388f65e0e/go.mod h1:Q0lwpjpT5wVhLN+uA4xk3I+z6/Y6YssDqNgatvLuo5o=

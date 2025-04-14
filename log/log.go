@@ -68,7 +68,7 @@ func (l *Logger) Timezone() *time.Location {
 func (l *Logger) Date() time.Time {
 	dt, err := time.Parse(timeFormat, time.Now().In(l.TZ).Format(timeFormat))
 	if err != nil {
-		fmt.Printf(err.Error())
+		fmt.Print(err.Error())
 		return time.Time{}
 	}
 	return dt

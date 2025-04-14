@@ -2,7 +2,7 @@ package cache
 
 import (
 	"github.com/google/uuid"
-	"github.com/iTchTheRightSpot/utility/log"
+	"github.com/iTchTheRightSpot/utility/utils"
 	"reflect"
 	"sync"
 	"testing"
@@ -20,7 +20,7 @@ func TestInMemoryCache(t *testing.T) {
 		t.Parallel()
 
 		cache := InMemoryCache[string, cxObj]{
-			logger:   log.DevLogger("UTC"),
+			logger:   utils.DevLogger("UTC"),
 			cache:    &sync.Map{},
 			duration: time.Duration(2) * time.Second,
 			size:     2,
@@ -48,7 +48,7 @@ func TestInMemoryCache(t *testing.T) {
 		t.Parallel()
 
 		cache := InMemoryCache[string, cxObj]{
-			logger:   log.DevLogger("UTC"),
+			logger:   utils.DevLogger("UTC"),
 			cache:    &sync.Map{},
 			duration: time.Duration(2) * time.Second,
 			size:     2,
@@ -70,7 +70,7 @@ func TestInMemoryCache(t *testing.T) {
 		t.Parallel()
 
 		cache := InMemoryCache[string, cxObj]{
-			logger:   log.DevLogger("UTC"),
+			logger:   utils.DevLogger("UTC"),
 			cache:    &sync.Map{},
 			duration: time.Duration(2) * time.Second,
 			size:     2,
@@ -94,7 +94,7 @@ func TestInMemoryCache(t *testing.T) {
 		t.Parallel()
 
 		cache := InMemoryCache[string, cxObj]{
-			logger:   log.DevLogger("UTC"),
+			logger:   utils.DevLogger("UTC"),
 			cache:    &sync.Map{},
 			duration: time.Duration(2) * time.Second,
 			size:     2,
@@ -119,7 +119,7 @@ func TestInMemoryCache(t *testing.T) {
 		t.Parallel()
 
 		cache := InMemoryCache[string, cxObj]{
-			logger:   log.DevLogger("UTC"),
+			logger:   utils.DevLogger("UTC"),
 			cache:    &sync.Map{},
 			duration: time.Duration(2) * time.Second,
 			size:     2,

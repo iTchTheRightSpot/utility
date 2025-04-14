@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"github.com/iTchTheRightSpot/utility/log"
+	"github.com/iTchTheRightSpot/utility/utils"
 	"sync"
 	"time"
 )
@@ -14,7 +14,7 @@ type ICache[K any, V any] interface {
 }
 
 type InMemoryCache[K any, V any] struct {
-	logger   log.ILogger
+	logger   utils.ILogger
 	cache    *sync.Map
 	duration time.Duration
 	size     int
@@ -27,7 +27,7 @@ type customValue[V any] struct {
 }
 
 // SyncMapInMemoryCache duration is in minutes
-func SyncMapInMemoryCache[K any, V any](l log.ILogger, duration, size int) ICache[K, V] {
+func SyncMapInMemoryCache[K any, V any](l utils.ILogger, duration, size int) ICache[K, V] {
 	return &InMemoryCache[K, V]{
 		logger:   l,
 		cache:    &sync.Map{},

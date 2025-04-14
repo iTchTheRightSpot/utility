@@ -1,4 +1,4 @@
-module github.com/iTchTheRightSpot/log-impl
+module github.com/iTchTheRightSpot/log
 
 go 1.24.2
 

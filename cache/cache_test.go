@@ -19,7 +19,7 @@ func TestInMemoryCache(t *testing.T) {
 	t.Run("should insert and retrieve", func(t *testing.T) {
 		t.Parallel()
 
-		cache := InMemoryCache[string, cxObj]{
+		cache := inMemoryCache[string, cxObj]{
 			logger:   utils.DevLogger("UTC"),
 			cache:    &sync.Map{},
 			duration: time.Duration(2) * time.Second,
@@ -47,7 +47,7 @@ func TestInMemoryCache(t *testing.T) {
 	t.Run("should insert and self delete", func(t *testing.T) {
 		t.Parallel()
 
-		cache := InMemoryCache[string, cxObj]{
+		cache := inMemoryCache[string, cxObj]{
 			logger:   utils.DevLogger("UTC"),
 			cache:    &sync.Map{},
 			duration: time.Duration(2) * time.Second,
@@ -69,7 +69,7 @@ func TestInMemoryCache(t *testing.T) {
 	t.Run("should insert & delete", func(t *testing.T) {
 		t.Parallel()
 
-		cache := InMemoryCache[string, cxObj]{
+		cache := inMemoryCache[string, cxObj]{
 			logger:   utils.DevLogger("UTC"),
 			cache:    &sync.Map{},
 			duration: time.Duration(2) * time.Second,
@@ -93,7 +93,7 @@ func TestInMemoryCache(t *testing.T) {
 	t.Run("validate max size not exceeded", func(t *testing.T) {
 		t.Parallel()
 
-		cache := InMemoryCache[string, cxObj]{
+		cache := inMemoryCache[string, cxObj]{
 			logger:   utils.DevLogger("UTC"),
 			cache:    &sync.Map{},
 			duration: time.Duration(2) * time.Second,
@@ -118,7 +118,7 @@ func TestInMemoryCache(t *testing.T) {
 	t.Run("clear all", func(t *testing.T) {
 		t.Parallel()
 
-		cache := InMemoryCache[string, cxObj]{
+		cache := inMemoryCache[string, cxObj]{
 			logger:   utils.DevLogger("UTC"),
 			cache:    &sync.Map{},
 			duration: time.Duration(2) * time.Second,

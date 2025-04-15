@@ -13,7 +13,7 @@ type ICache[K any, V any] interface {
 	Clear()
 }
 
-type InMemoryCache[K any, V any] struct {
+type inMemoryCache[K any, V any] struct {
 	logger   utils.ILogger
 	cache    *sync.Map
 	duration time.Duration
@@ -28,7 +28,7 @@ type customValue[V any] struct {
 
 // SyncMapInMemoryCache duration is in minutes
 func SyncMapInMemoryCache[K any, V any](l utils.ILogger, duration, size int) ICache[K, V] {
-	return &InMemoryCache[K, V]{
+	return &inMemoryCache[K, V]{
 		logger:   l,
 		cache:    &sync.Map{},
 		duration: time.Duration(duration) * time.Minute * time.Second,
@@ -36,7 +36,7 @@ func SyncMapInMemoryCache[K any, V any](l utils.ILogger, duration, size int) ICa
 	}
 }
 
-func (dep *InMemoryCache[K, V]) Length() int {
+func (dep *inMemoryCache[K, V]) Length() int {
 	var count int
 	dep.cache.Range(func(key, value interface{}) bool {
 		count++
@@ -45,7 +45,7 @@ func (dep *InMemoryCache[K, V]) Length() int {
 	return count
 }
 
-func (dep *InMemoryCache[K, V]) LeastUsed() K {
+func (dep *inMemoryCache[K, V]) LeastUsed() K {
 	var k K
 	now := dep.logger.Date()
 	lastAccess := &now
@@ -60,7 +60,7 @@ func (dep *InMemoryCache[K, V]) LeastUsed() K {
 	return k
 }
 
-func (dep *InMemoryCache[K, V]) Put(key K, value V) {
+func (dep *inMemoryCache[K, V]) Put(key K, value V) {
 	length := dep.Length()
 	if length == dep.size {
 		k := dep.LeastUsed()
@@ -75,7 +75,7 @@ func (dep *InMemoryCache[K, V]) Put(key K, value V) {
 	dep.cache.Store(key, customValue[V]{timer: timeout, value: value})
 }
 
-func (dep *InMemoryCache[K, V]) Get(key K) *V {
+func (dep *inMemoryCache[K, V]) Get(key K) *V {
 	value, ok := dep.cache.Load(key)
 	if !ok {
 		return nil
@@ -85,11 +85,11 @@ func (dep *InMemoryCache[K, V]) Get(key K) *V {
 	return &v.value
 }
 
-func (dep *InMemoryCache[K, V]) Delete(key K) {
+func (dep *inMemoryCache[K, V]) Delete(key K) {
 	dep.cache.Delete(key)
 }
 
-func (dep *InMemoryCache[K, V]) Clear() {
+func (dep *inMemoryCache[K, V]) Clear() {
 	dep.cache.Range(func(key, value any) bool {
 		dep.cache.Delete(key)
 		return true

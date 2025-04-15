@@ -47,14 +47,14 @@ type Logger struct {
 	Webhook    string
 }
 
-func ProdLogger(timezone, webhook string) ILogger {
+func ProdLogger(timeformat, timezone, webhook string) ILogger {
 	tz, err := Timezone(timezone)
 	if err != nil {
 		log.Fatal(err.Error())
 		return nil
 	}
 	return &Logger{
-		TimeFormat: time.RFC3339,
+		TimeFormat: timeformat,
 		TZ:         tz,
 		Client:     http.Client{Timeout: 2 * time.Second},
 		Webhook:    webhook,

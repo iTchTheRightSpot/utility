@@ -8,7 +8,8 @@ import (
 )
 
 type mockLogger struct {
-	location *time.Location
+	location   *time.Location
+	timeformat string
 }
 
 func DevLogger(timezone string) ILogger {
@@ -17,7 +18,7 @@ func DevLogger(timezone string) ILogger {
 		log.Fatal(err.Error())
 		return nil
 	}
-	return &mockLogger{location: loc}
+	return &mockLogger{location: loc, timeformat: time.RFC3339}
 }
 
 func (m *mockLogger) Timezone() *time.Location {
@@ -25,7 +26,7 @@ func (m *mockLogger) Timezone() *time.Location {
 }
 
 func (m *mockLogger) Date() time.Time {
-	dt, err := time.Parse(timeFormat, time.Now().In(m.location).Format(timeFormat))
+	dt, err := time.Parse(m.timeformat, time.Now().In(m.location).Format(m.timeformat))
 	if err != nil {
 		fmt.Print(err.Error())
 	}

@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-var timeFormat = time.RFC3339
-
 type ILogger interface {
 	Date() time.Time
 	Timezone() *time.Location
@@ -43,9 +41,10 @@ type discord struct {
 }
 
 type Logger struct {
-	TZ      *time.Location
-	Client  http.Client
-	Webhook string
+	TimeFormat string
+	TZ         *time.Location
+	Client     http.Client
+	Webhook    string
 }
 
 func ProdLogger(timezone, webhook string) ILogger {
@@ -55,9 +54,10 @@ func ProdLogger(timezone, webhook string) ILogger {
 		return nil
 	}
 	return &Logger{
-		TZ:      tz,
-		Client:  http.Client{Timeout: 2 * time.Second},
-		Webhook: webhook,
+		TimeFormat: time.RFC3339,
+		TZ:         tz,
+		Client:     http.Client{Timeout: 2 * time.Second},
+		Webhook:    webhook,
 	}
 }
 
@@ -66,7 +66,7 @@ func (l *Logger) Timezone() *time.Location {
 }
 
 func (l *Logger) Date() time.Time {
-	dt, err := time.Parse(timeFormat, time.Now().In(l.TZ).Format(timeFormat))
+	dt, err := time.Parse(l.TimeFormat, time.Now().In(l.TZ).Format(l.TimeFormat))
 	if err != nil {
 		fmt.Print(err.Error())
 		return time.Time{}

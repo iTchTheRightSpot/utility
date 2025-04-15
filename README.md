@@ -2,12 +2,18 @@
 
 A reusable Go module with common utilities I frequently use across projects.
 
+## ✨ Features
+
 1. 🔧 Structured logging:
-   1. Optional HTTP middleware for request logging.
-   2. Built-in Discord integration for real-time alerts
+   - Optional HTTP middleware for request logging.
+   - Optional HTTP middleware to load single page applications.
+     - ⚠️ Warning, do not store sensitive file(s) in SPA directory.
+   - Built-in Discord integration for real-time alerts
 2. 🧠 In-memory caching:
-   1. Lightweight, thread-safe, using sync.Map package.
-3. Error:
+   - Lightweight, thread-safe, using sync.Map package.
+3. ❗Error:
+   - Smart error responses based on error type.
+   - Utility function for sending standardized HTTP error responses.
 
 ## Installation
 
@@ -15,10 +21,6 @@ A reusable Go module with common utilities I frequently use across projects.
 go get github.com/iTchTheRightSpot/utility
 ```
 
-### Log terminal view
-
-![terminal](./images/terminal.png)
-
 ### Discord log view
 
-![discord](./images/discord.png)
+![discord](discord.png)

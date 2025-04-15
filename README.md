@@ -21,6 +21,12 @@ A reusable Go module with common utilities I frequently use across projects.
 go get github.com/iTchTheRightSpot/utility
 ```
 
+or
+
+```code
+go get github.com/iTchTheRightSpot/utility@<commit-tag>
+```
+
 ### Discord log view
 
 ![discord](discord.png)

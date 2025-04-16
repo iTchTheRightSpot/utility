@@ -97,11 +97,6 @@ func errorStatus(err error) int {
 	}
 }
 
-type Error struct {
-	Status  int    `json:"status"`
-	Message string `json:"message"`
-}
-
 func ErrorResponse(w http.ResponseWriter, err error) {
 	code := errorStatus(err)
 	w.Header().Set("Content-Type", "application/json")

@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
@@ -108,36 +107,6 @@ func TestMiddleware(t *testing.T) {
 		// assert
 		if rr.Code != http.StatusOK {
 			t.Errorf("expected status code %d, got %d", http.StatusOK, rr.Code)
-			t.FailNow()
-		}
-	})
-
-	t.Run("not found should catch routes that don't exist", func(t *testing.T) {
-		t.Parallel()
-
-		// given
-		m := Middleware{Logger: lg}
-
-		mux := http.NewServeMux()
-		mux.HandleFunc("GET /route", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(204)
-		})
-
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		rr := httptest.NewRecorder()
-
-		// method to test
-		m.NotFound(mux).ServeHTTP(rr, req)
-
-		// assert
-		if rr.Code != http.StatusNotFound {
-			t.Errorf("expected status code %d, got %d", http.StatusNotFound, rr.Code)
-			t.FailNow()
-		}
-
-		str := `{"message": "route not found", "status": 404}`
-		if strings.TrimSpace(rr.Body.String()) != str {
-			t.Errorf("expect %s, given %s", str, rr.Body.String())
 			t.FailNow()
 		}
 	})

@@ -11,13 +11,11 @@ import (
 
 type wrappedWriter struct {
 	http.ResponseWriter
-	statusCode  int
-	wroteHeader bool
+	statusCode int
 }
 
 func (w *wrappedWriter) WriteHeader(statusCode int) {
 	w.statusCode = statusCode
-	w.wroteHeader = true
 	w.ResponseWriter.WriteHeader(statusCode)
 }
 
@@ -93,16 +91,5 @@ func (dep *Middleware) SPA(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
-	})
-}
-
-func (dep *Middleware) NotFound(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rec := &wrappedWriter{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(rec, r)
-		if rec.statusCode == http.StatusOK && !rec.wroteHeader {
-			dep.Logger.Error(r.Context(), "route not found")
-			utils.ErrorResponse(w, &utils.NotFoundError{Message: "route not found"})
-		}
 	})
 }

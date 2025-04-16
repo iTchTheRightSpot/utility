@@ -15,8 +15,8 @@ type wrappedWriter struct {
 }
 
 func (w *wrappedWriter) WriteHeader(statusCode int) {
-	w.ResponseWriter.WriteHeader(statusCode)
 	w.statusCode = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
 }
 
 type Middleware struct {

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 )
@@ -102,5 +103,11 @@ type Error struct {
 }
 
 func ErrorResponse(w http.ResponseWriter, err error) {
-	http.Error(w, err.Error(), errorStatus(err))
+	code := errorStatus(err)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+
+	if er := json.NewEncoder(w).Encode(map[string]string{"message": err.Error()}); er != nil {
+		http.Error(w, err.Error(), code)
+	}
 }

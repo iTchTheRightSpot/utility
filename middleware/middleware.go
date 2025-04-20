@@ -72,7 +72,7 @@ func (dep *Middleware) Log(next http.Handler) http.Handler {
 	})
 }
 
-// SPA loads single page api
+// SPA loads single page or frontend pages registered in FileSystem
 func (dep *Middleware) SPA(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, dep.ApiPrefix) {
@@ -111,6 +111,18 @@ func (dep *Middleware) SPA(next http.Handler) http.Handler {
 			return
 		}
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (dep *Middleware) Panic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		go func() {
+			if err := recover(); err != nil {
+				dep.Logger.Critical(r.Context(), err)
+				utils.ErrorResponse(w, &utils.ServerError{})
+			}
+		}()
 		next.ServeHTTP(w, r)
 	})
 }

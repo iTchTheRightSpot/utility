@@ -41,9 +41,10 @@ func (w *wrappedWriter) Write(body []byte) (int, error) {
 }
 
 type Middleware struct {
-	Logger           utils.ILogger
-	Fs               http.FileSystem
-	ApiPrefix        string
+	Logger    utils.ILogger
+	Fs        http.FileSystem
+	ApiPrefix string
+	// If true, error response body is overridden for routes or routes methods that do not exist.
 	Disable404And405 bool
 }
 

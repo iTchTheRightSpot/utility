@@ -117,7 +117,6 @@ func TestMiddleware(t *testing.T) {
 
 		// given
 		m := Middleware{Logger: lg}
-
 		mux := http.NewServeMux()
 
 		t.Run("route not found", func(t *testing.T) {
@@ -195,5 +194,35 @@ func TestMiddleware(t *testing.T) {
 				t.FailNow()
 			}
 		})
+	})
+
+	t.Run("should recover from panic", func(t *testing.T) {
+		t.Parallel()
+
+		// given
+		m := Middleware{Logger: lg}
+		mux := http.NewServeMux()
+		mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+			panic("simulate error")
+		})
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rr := httptest.NewRecorder()
+
+		// method to test
+		m.Panic(mux).ServeHTTP(rr, req)
+
+		// assert
+		if rr.Code != http.StatusInternalServerError {
+			t.Errorf("expected status code %d, got %d", http.StatusInternalServerError, rr.Code)
+			t.FailNow()
+		}
+
+		str := strings.TrimSpace(rr.Body.String())
+		s := `{"message":"server error"}`
+		if str != s {
+			t.Errorf("expect equal, expect %s, got %s", s, str)
+			t.FailNow()
+		}
 	})
 }

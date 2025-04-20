@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/iTchTheRightSpot/utility/utils"
 	"net/http"
+	"runtime"
 	"strings"
 )
 
@@ -115,11 +116,15 @@ func (dep *Middleware) SPA(next http.Handler) http.Handler {
 	})
 }
 
+// Panic middleware only handles panic in the main go routine not goroutines spunned within main goroutine
 func (dep *Middleware) Panic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		go func() {
+		defer func() {
 			if err := recover(); err != nil {
-				dep.Logger.Critical(r.Context(), err)
+				buf := make([]byte, 2048)
+				n := runtime.Stack(buf, true)
+				buf = buf[:n]
+				dep.Logger.Critical(r.Context(), err, string(buf))
 				utils.ErrorResponse(w, &utils.ServerError{})
 			}
 		}()

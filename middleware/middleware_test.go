@@ -115,12 +115,12 @@ func TestMiddleware(t *testing.T) {
 	t.Run("route not found & method not found body overridden", func(t *testing.T) {
 		t.Parallel()
 
-		// given
-		m := Middleware{Logger: lg}
-		mux := http.NewServeMux()
-
 		t.Run("route not found", func(t *testing.T) {
 			t.Parallel()
+
+			// given
+			m := Middleware{Logger: lg}
+			mux := http.NewServeMux()
 
 			req := httptest.NewRequest(http.MethodPost, "/path", nil)
 			rr := httptest.NewRecorder()
@@ -144,6 +144,10 @@ func TestMiddleware(t *testing.T) {
 
 		t.Run("method not found", func(t *testing.T) {
 			t.Parallel()
+
+			// given
+			m := Middleware{Logger: lg}
+			mux := http.NewServeMux()
 
 			mux.HandleFunc("POST /", func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(200)
@@ -173,13 +177,18 @@ func TestMiddleware(t *testing.T) {
 			t.Parallel()
 
 			// enable
-			mm := Middleware{Logger: lg, Disable404And405: true}
+			// given
+			m := Middleware{Logger: lg, Disable404And405: true}
+			mux := http.NewServeMux()
+			mux.HandleFunc("POST /path", func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(200)
+			})
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			rr := httptest.NewRecorder()
 
 			// method to test
-			mm.Log(mux).ServeHTTP(rr, req)
+			m.Log(mux).ServeHTTP(rr, req)
 
 			// assert
 			if rr.Code != http.StatusNotFound {

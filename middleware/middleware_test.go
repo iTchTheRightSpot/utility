@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -107,6 +108,129 @@ func TestMiddleware(t *testing.T) {
 		// assert
 		if rr.Code != http.StatusOK {
 			t.Errorf("expected status code %d, got %d", http.StatusOK, rr.Code)
+			t.FailNow()
+		}
+	})
+
+	t.Run("route not found & method not found body overridden", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("route not found", func(t *testing.T) {
+			t.Parallel()
+
+			// given
+			m := Middleware{Logger: lg}
+			mux := http.NewServeMux()
+
+			req := httptest.NewRequest(http.MethodPost, "/path", nil)
+			rr := httptest.NewRecorder()
+
+			// method to test
+			m.Log(mux).ServeHTTP(rr, req)
+
+			// assert
+			if rr.Code != http.StatusNotFound {
+				t.Errorf("expected status code %d, got %d", http.StatusNotFound, rr.Code)
+				t.FailNow()
+			}
+
+			str := strings.TrimSpace(rr.Body.String())
+			s := `{"message": "route not found"}`
+			if str != s {
+				t.Errorf("expect equal, expect %s, got %s", s, str)
+				t.FailNow()
+			}
+		})
+
+		t.Run("method not found", func(t *testing.T) {
+			t.Parallel()
+
+			// given
+			m := Middleware{Logger: lg}
+			mux := http.NewServeMux()
+
+			mux.HandleFunc("POST /", func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(200)
+			})
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			rr := httptest.NewRecorder()
+
+			// method to test
+			m.Log(mux).ServeHTTP(rr, req)
+
+			// assert
+			if rr.Code != http.StatusMethodNotAllowed {
+				t.Errorf("expected status code %d, got %d", http.StatusMethodNotAllowed, rr.Code)
+				t.FailNow()
+			}
+
+			str := strings.TrimSpace(rr.Body.String())
+			s := `{"message": "method not allowed"}`
+			if str != s {
+				t.Errorf("expect equal, expect %s, got %s", s, str)
+				t.FailNow()
+			}
+		})
+
+		t.Run("disable overriding body", func(t *testing.T) {
+			t.Parallel()
+
+			// enable
+			// given
+			m := Middleware{Logger: lg, Disable404And405: true}
+			mux := http.NewServeMux()
+			mux.HandleFunc("POST /path", func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(200)
+			})
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			rr := httptest.NewRecorder()
+
+			// method to test
+			m.Log(mux).ServeHTTP(rr, req)
+
+			// assert
+			if rr.Code != http.StatusNotFound {
+				t.Errorf("expected status code %d, got %d", http.StatusNotFound, rr.Code)
+				t.FailNow()
+			}
+
+			str := strings.TrimSpace(rr.Body.String())
+			s := `{"message": "route not found"}`
+			if str == s {
+				t.Errorf("expect not equal, expect %s, got %s", s, str)
+				t.FailNow()
+			}
+		})
+	})
+
+	t.Run("should recover from panic", func(t *testing.T) {
+		t.Parallel()
+
+		// given
+		m := Middleware{Logger: lg}
+		mux := http.NewServeMux()
+		mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+			panic("simulate error")
+		})
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rr := httptest.NewRecorder()
+
+		// method to test
+		m.Panic(mux).ServeHTTP(rr, req)
+
+		// assert
+		if rr.Code != http.StatusInternalServerError {
+			t.Errorf("expected status code %d, got %d", http.StatusInternalServerError, rr.Code)
+			t.FailNow()
+		}
+
+		str := strings.TrimSpace(rr.Body.String())
+		s := `{"message":"server error"}`
+		if str != s {
+			t.Errorf("expect equal, expect %s, got %s", s, str)
 			t.FailNow()
 		}
 	})

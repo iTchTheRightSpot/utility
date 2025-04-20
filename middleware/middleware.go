@@ -6,23 +6,46 @@ import (
 	"github.com/google/uuid"
 	"github.com/iTchTheRightSpot/utility/utils"
 	"net/http"
+	"runtime"
 	"strings"
 )
 
 type wrappedWriter struct {
 	http.ResponseWriter
-	statusCode int
+	code             int
+	override         bool
+	Disable404And405 bool
 }
 
-func (w *wrappedWriter) WriteHeader(statusCode int) {
-	w.statusCode = statusCode
-	w.ResponseWriter.WriteHeader(statusCode)
+func (w *wrappedWriter) WriteHeader(code int) {
+	// keep track of issue in case there is an easier way to
+	// update this behaviour https://github.com/golang/go/issues/65648
+	if !w.Disable404And405 && w.Header().Get("Content-Type") == "text/plain; charset=utf-8" {
+		w.Header().Set("Content-Type", "application/json")
+		w.override = true
+	}
+	w.code = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *wrappedWriter) Write(body []byte) (int, error) {
+	if w.override {
+		switch w.code {
+		case http.StatusNotFound:
+			body = []byte(`{"message": "route not found"}`)
+		case http.StatusMethodNotAllowed:
+			body = []byte(`{"message": "method not allowed"}`)
+		}
+	}
+	return w.ResponseWriter.Write(body)
 }
 
 type Middleware struct {
 	Logger    utils.ILogger
 	Fs        http.FileSystem
 	ApiPrefix string
+	// If true, error response body is overridden for routes or routes methods that do not exist.
+	Disable404And405 bool
 }
 
 // https://stackoverflow.com/questions/27234861/correct-way-of-getting-clients-ip-addresses-from-http-request
@@ -44,14 +67,14 @@ func (dep *Middleware) Log(next http.Handler) http.Handler {
 			Path:   r.URL.Path,
 		}
 		r = r.WithContext(context.WithValue(r.Context(), utils.RequestKey, b))
-		obj := &wrappedWriter{ResponseWriter: w, statusCode: http.StatusOK}
+		obj := &wrappedWriter{ResponseWriter: w, code: http.StatusOK, Disable404And405: dep.Disable404And405}
 		next.ServeHTTP(obj, r)
-		str := fmt.Sprintf("Response Status: %d | Duration: %v second(s)", obj.statusCode, dep.Logger.Date().Sub(start).Seconds())
+		str := fmt.Sprintf("Response Status: %d | Duration: %v second(s)", obj.code, dep.Logger.Date().Sub(start).Seconds())
 		dep.Logger.Log(r.Context(), str)
 	})
 }
 
-// SPA loads single page api
+// SPA loads single page or frontend pages registered in FileSystem
 func (dep *Middleware) SPA(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, dep.ApiPrefix) {
@@ -90,6 +113,22 @@ func (dep *Middleware) SPA(next http.Handler) http.Handler {
 			return
 		}
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Panic middleware only handles panic in the main go routine not goroutines spunned within main goroutine
+func (dep *Middleware) Panic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				buf := make([]byte, 2048)
+				n := runtime.Stack(buf, true)
+				buf = buf[:n]
+				dep.Logger.Critical(r.Context(), err, string(buf))
+				utils.ErrorResponse(w, &utils.ServerError{})
+			}
+		}()
 		next.ServeHTTP(w, r)
 	})
 }

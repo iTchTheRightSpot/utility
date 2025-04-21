@@ -2,12 +2,14 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/iTchTheRightSpot/utility/utils"
 	"net/http"
 	"runtime"
 	"strings"
+	"time"
 )
 
 type wrappedWriter struct {
@@ -129,6 +131,23 @@ func (dep *Middleware) Panic(next http.Handler) http.Handler {
 				utils.ErrorResponse(w, &utils.ServerError{})
 			}
 		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Timeout following an example https://destel.dev/blog/timeout-middleware-in-go
+func (dep *Middleware) Timeout(timeout time.Duration, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), timeout)
+		defer func() {
+			cancel()
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				dep.Logger.Critical(ctx, ctx.Err().Error())
+				utils.ErrorResponse(w, &utils.ServerTimeout{})
+			}
+		}()
+
+		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
 }

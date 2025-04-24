@@ -29,7 +29,7 @@ func Timezone(timezone string) (*time.Location, error) {
 }
 
 type ITransactionProvider[T any] interface {
-	RunInTransaction(ctx context.Context, fn func(adapters T) error) error
+	RunInTransaction(ctx context.Context, fn func(g T) error) error
 }
 
 func RunInTx(ctx context.Context, l ILogger, db *sql.DB, fn func(*sql.Tx) error) error {

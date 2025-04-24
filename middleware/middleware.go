@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/iTchTheRightSpot/utility/utils"
@@ -135,19 +134,27 @@ func (dep *Middleware) Panic(next http.Handler) http.Handler {
 	})
 }
 
-// Timeout following an example https://destel.dev/blog/timeout-middleware-in-go
+// Timeout following an example https://www.jajaldoang.com/post/golang-function-timeout-with-context/
+// also https://stackoverflow.com/questions/51258952/use-http-timeouthandler-or-readtimeout-writetimeout
+// explains the difference between WriteTimeout and defining a handler
 func (dep *Middleware) Timeout(timeout time.Duration, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), timeout)
-		defer func() {
-			cancel()
-			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				dep.Logger.Critical(ctx, ctx.Err().Error())
-				utils.ErrorResponse(w, &utils.ServerTimeout{})
-			}
-		}()
+		defer cancel()
 
 		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
+
+		done := make(chan bool)
+		go func() {
+			next.ServeHTTP(w, r)
+			done <- true
+		}()
+
+		select {
+		case <-ctx.Done():
+			dep.Logger.Critical(ctx, ctx.Err().Error())
+			utils.ErrorResponse(w, &utils.ServerTimeout{})
+		case <-done:
+		}
 	})
 }

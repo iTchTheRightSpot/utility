@@ -30,9 +30,7 @@ func main() {
 		IdleTimeout:       30 * time.Second,
 		ReadHeaderTimeout: 3 * time.Second,
 		ReadTimeout:       3 * time.Second,
-		Handler:           http.TimeoutHandler(m.Log(m.Panic(mux)), 3*time.Second, "timed out"),
-		//Handler: m.Log(m.Timeout(3*time.Second, m.Panic(mux))),
-		//Handler: m.Log(mux),
+		Handler:           m.Log(m.Timeout(3*time.Second, mux)),
 	}
 
 	lg.Log(context.Background(), "server listening on port 8080")

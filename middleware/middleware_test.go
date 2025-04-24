@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 //go:embed html
@@ -229,6 +230,37 @@ func TestMiddleware(t *testing.T) {
 
 		str := strings.TrimSpace(rr.Body.String())
 		s := `{"message":"server error"}`
+		if str != s {
+			t.Errorf("expect equal, expect %s, got %s", s, str)
+			t.FailNow()
+		}
+	})
+
+	t.Run("timeout middleware", func(t *testing.T) {
+		t.Parallel()
+
+		// given
+		m := Middleware{Logger: lg}
+		mux := http.NewServeMux()
+		mux.HandleFunc("GET /api", func(w http.ResponseWriter, r *http.Request) {
+			time.Sleep(2 * time.Second)
+			w.WriteHeader(200)
+		})
+
+		req := httptest.NewRequest(http.MethodGet, "/api", nil)
+		rr := httptest.NewRecorder()
+
+		// method to test
+		m.Timeout(1*time.Second, mux).ServeHTTP(rr, req)
+
+		// assert
+		if rr.Code != http.StatusGatewayTimeout {
+			t.Errorf("expected status code %d, got %d", http.StatusGatewayTimeout, rr.Code)
+			t.FailNow()
+		}
+
+		str := strings.TrimSpace(rr.Body.String())
+		s := `{"message":"server timeout"}`
 		if str != s {
 			t.Errorf("expect equal, expect %s, got %s", s, str)
 			t.FailNow()

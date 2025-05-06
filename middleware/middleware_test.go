@@ -260,7 +260,7 @@ func TestMiddleware(t *testing.T) {
 		}
 
 		str := strings.TrimSpace(rr.Body.String())
-		s := `{"message":"server timeout"}`
+		s := `{"message":"server timed out"}`
 		if str != s {
 			t.Errorf("expect equal, expect %s, got %s", s, str)
 			t.FailNow()

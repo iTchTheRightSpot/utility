@@ -72,17 +72,6 @@ func (e *ServerError) Error() string {
 	return e.Message
 }
 
-type ServerTimeout struct {
-	Message string
-}
-
-func (e *ServerTimeout) Error() string {
-	if e.Message == "" {
-		return "server timed out"
-	}
-	return e.Message
-}
-
 func errorStatus(err error) int {
 	var notFoundError *NotFoundError
 	var insertionError *InsertionError
@@ -90,7 +79,6 @@ func errorStatus(err error) int {
 	var authenticationError *AuthenticationError
 	var accessDeniedError *AccessDeniedError
 	var serverError *ServerError
-	var serverTimeout *ServerTimeout
 	switch {
 	case errors.As(err, &notFoundError):
 		return http.StatusNotFound
@@ -104,8 +92,6 @@ func errorStatus(err error) int {
 		return http.StatusForbidden
 	case errors.As(err, &serverError):
 		return http.StatusInternalServerError
-	case errors.As(err, &serverTimeout):
-		return http.StatusGatewayTimeout
 	default:
 		return http.StatusInternalServerError
 	}

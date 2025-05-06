@@ -74,14 +74,14 @@ func (l *Logger) Date() time.Time {
 	return dt
 }
 
-func (l *Logger) Post(d *discord) {
+func payload(d *discord) map[string]interface{} {
 	var title strings.Builder
 	title.WriteString("📄 New Log Entry")
 	if d.Status == iCritical || d.Status == iError {
 		title.WriteString(" @everyone")
 	}
 
-	payload := map[string]interface{}{
+	return map[string]interface{}{
 		"embeds": []map[string]interface{}{
 			{
 				"title":       title.String(),
@@ -98,9 +98,11 @@ func (l *Logger) Post(d *discord) {
 			},
 		},
 	}
+}
 
+func (l *Logger) Emit(p interface{}) {
 	buf := new(bytes.Buffer)
-	if err := json.NewEncoder(buf).Encode(payload); err != nil {
+	if err := json.NewEncoder(buf).Encode(p); err != nil {
 		fmt.Printf("%s %s", iCritical, err.Error())
 		return
 	}
@@ -117,7 +119,7 @@ func (l *Logger) Error(ctx context.Context, variables ...interface{}) {
 		return
 	}
 	fmt.Print(str)
-	l.Post(d)
+	l.Emit(payload(d))
 }
 
 func (l *Logger) Critical(ctx context.Context, variables ...interface{}) {
@@ -127,7 +129,7 @@ func (l *Logger) Critical(ctx context.Context, variables ...interface{}) {
 		return
 	}
 	fmt.Print(str)
-	l.Post(d)
+	l.Emit(payload(d))
 }
 
 func (l *Logger) Log(ctx context.Context, variables ...interface{}) {
@@ -137,7 +139,7 @@ func (l *Logger) Log(ctx context.Context, variables ...interface{}) {
 		return
 	}
 	fmt.Print(str)
-	l.Post(d)
+	l.Emit(payload(d))
 }
 
 func (l *Logger) Fatal(variables ...interface{}) {

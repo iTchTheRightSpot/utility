@@ -28,12 +28,16 @@ func Timezone(timezone string) (*time.Location, error) {
 	return location, nil
 }
 
+type ITransactionProvider[T any] interface {
+	RunInTransaction(ctx context.Context, fn func(g T) error) error
+}
+
 func RunInTx(ctx context.Context, l ILogger, db *sql.DB, fn func(*sql.Tx) error) error {
 	l.Log(ctx, "STARTING TRANSACTION")
 
 	tx, err := db.Begin()
 	if err != nil {
-		l.Critical(ctx, "FAILED TO BEGIN TRANSACTION: "+err.Error())
+		l.Critical(ctx, "FAILED TO START TRANSACTION: "+err.Error())
 		return &ServerError{}
 	}
 

@@ -10,42 +10,10 @@ import (
 	"strings"
 )
 
-type wrappedWriter struct {
-	http.ResponseWriter
-	code             int
-	override         bool
-	Disable404And405 bool
-}
-
-func (w *wrappedWriter) WriteHeader(code int) {
-	// keep track of issue in case there is an easier way to
-	// update this behaviour https://github.com/golang/go/issues/65648
-	if !w.Disable404And405 && w.Header().Get("Content-Type") == "text/plain; charset=utf-8" {
-		w.Header().Set("Content-Type", "application/json")
-		w.override = true
-	}
-	w.code = code
-	w.ResponseWriter.WriteHeader(code)
-}
-
-func (w *wrappedWriter) Write(body []byte) (int, error) {
-	if w.override {
-		switch w.code {
-		case http.StatusNotFound:
-			body = []byte(`{"message": "route not found"}`)
-		case http.StatusMethodNotAllowed:
-			body = []byte(`{"message": "method not allowed"}`)
-		}
-	}
-	return w.ResponseWriter.Write(body)
-}
-
 type Middleware struct {
 	Logger    utils.ILogger
 	Fs        http.FileSystem
 	ApiPrefix string
-	// If true, error response body is overridden for routes or routes methods that do not exist.
-	Disable404And405 bool
 }
 
 // https://stackoverflow.com/questions/27234861/correct-way-of-getting-clients-ip-addresses-from-http-request
@@ -67,10 +35,9 @@ func (dep *Middleware) Log(next http.Handler) http.Handler {
 			Path:   r.URL.Path,
 		}
 		r = r.WithContext(context.WithValue(r.Context(), utils.RequestKey, b))
-		obj := &wrappedWriter{ResponseWriter: w, code: http.StatusOK, Disable404And405: dep.Disable404And405}
+		obj := &logWriter{ResponseWriter: w, code: http.StatusOK}
 		next.ServeHTTP(obj, r)
-		str := fmt.Sprintf("Response Status: %d | Duration: %v second(s)", obj.code, dep.Logger.Date().Sub(start).Seconds())
-		dep.Logger.Log(r.Context(), str)
+		dep.Logger.Log(r.Context(), fmt.Sprintf("Response Status: %d | Duration: %v second(s)", obj.code, dep.Logger.Date().Sub(start).Seconds()))
 	})
 }
 
@@ -130,5 +97,11 @@ func (dep *Middleware) Panic(next http.Handler) http.Handler {
 			}
 		}()
 		next.ServeHTTP(w, r)
+	})
+}
+
+func (dep *Middleware) Error(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(&errorWriter{ResponseWriter: w}, r)
 	})
 }

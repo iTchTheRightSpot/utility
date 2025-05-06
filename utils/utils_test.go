@@ -22,7 +22,6 @@ func TestTransactionFunc(t *testing.T) {
 	t.Parallel()
 
 	lg := DevLogger("UTC")
-	mess := "server error"
 
 	t.Run("rollback. error starting transaction", func(t *testing.T) {
 		t.Parallel()
@@ -49,6 +48,7 @@ func TestTransactionFunc(t *testing.T) {
 			t.FailNow()
 		}
 
+		mess := "server error"
 		if err.Error() != mess {
 			t.Errorf("expect %s, given %s", mess, err.Error())
 			t.FailNow()
@@ -124,6 +124,7 @@ func TestTransactionFunc(t *testing.T) {
 			t.FailNow()
 		}
 
+		mess := "server error"
 		if err.Error() != mess {
 			t.Errorf("expect %s, given %s", mess, err.Error())
 			t.FailNow()
@@ -200,6 +201,7 @@ func TestTransactionFunc(t *testing.T) {
 			t.FailNow()
 		}
 
+		mess := "server error"
 		if err.Error() != mess {
 			t.Errorf("expect %s, given %s", mess, err.Error())
 			t.FailNow()

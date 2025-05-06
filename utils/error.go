@@ -78,7 +78,7 @@ type ServerTimeout struct {
 
 func (e *ServerTimeout) Error() string {
 	if e.Message == "" {
-		return "server timeout"
+		return "server timed out"
 	}
 	return e.Message
 }
